@@ -70,7 +70,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-indigo-50">
 
-       {/* ================= TOP ICON ================= */}
+       {/* ================== TOP ICON ================= */}
 <section className="pt-12 pb-4 text-center bg-white">
   <div className="flex justify-center items-center gap-3">
     <div className="bg-indigo-100 p-4 rounded-full shadow-md">
