@@ -1,7 +1,7 @@
-// src/pages/Register.jsx
 import React, { useState } from "react";
 import { registerUser } from "../services/authApi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { User, Mail, Phone, Lock, MapPin, ShieldCheck } from "lucide-react";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -72,39 +72,122 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-100 to-purple-200">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6">Register</h2>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+      <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-xl border">
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input name="name" placeholder="Full Name" required onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-xl" />
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="bg-emerald-600 p-2 rounded-lg">
+            <ShieldCheck className="text-white" size={24} />
+          </div>
+          <span className="text-xl font-black uppercase tracking-tight">
+            Safe<span className="text-emerald-600">Return</span>
+          </span>
+        </div>
 
-          <input name="email" type="email" placeholder="Email" required onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-xl" />
+        <h2 className="text-3xl font-black text-center text-slate-900 mb-2">
+          Register
+        </h2>
+        <p className="text-center text-slate-500 mb-8">
+          Create your verified account
+        </p>
 
-          <input name="phone" placeholder="Phone" required onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-xl" />
+        <form onSubmit={handleSubmit} className="space-y-5">
 
-          <input name="password" type="password" placeholder="Password" required onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-xl" />
+          {/* Name */}
+          <div className="relative">
+            <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              name="name"
+              placeholder="Full Name"
+              required
+              onChange={handleChange}
+              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5"
+            />
+          </div>
 
+          {/* Email */}
+          <div className="relative">
+            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              name="email"
+              type="email"
+              placeholder="Email"
+              required
+              onChange={handleChange}
+              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5"
+            />
+          </div>
+
+          {/* Phone */}
+          <div className="relative">
+            <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              name="phone"
+              placeholder="Phone"
+              required
+              onChange={handleChange}
+              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5"
+            />
+          </div>
+
+          {/* Password */}
+          <div className="relative">
+            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              required
+              onChange={handleChange}
+              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5"
+            />
+          </div>
+
+          {/* Location */}
           <div className="flex gap-2">
-            <input value={location} readOnly placeholder="Home Location"
-              className="flex-1 px-4 py-3 border rounded-xl" />
-            <button type="button" onClick={fetchLocation}
-              className="bg-purple-500 text-white px-4 rounded-xl">
+            <div className="relative flex-1">
+              <MapPin size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={location}
+                readOnly
+                placeholder="Home Location"
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={fetchLocation}
+              className="bg-emerald-600 text-white px-4 rounded-xl font-semibold hover:bg-emerald-700 transition"
+            >
               {loadingLocation ? "..." : "Fetch"}
             </button>
           </div>
 
-          <button type="submit"
-            className="w-full bg-blue-500 text-white py-3 rounded-xl">
+          {/* Submit */}
+          <button
+            type="submit"
+            className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-emerald-600 transition"
+          >
             {loadingSubmit ? "Registering..." : "Register"}
           </button>
         </form>
 
-        {message && <p className="mt-4 text-center">{message}</p>}
+        {message && (
+          <p className="mt-6 text-center text-sm text-slate-600">
+            {message}
+          </p>
+        )}
+
+        <div className="mt-8 text-center text-slate-500">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="text-emerald-600 font-bold hover:underline"
+          >
+            Login
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -1,116 +1,110 @@
 // src/services/authApi.js
 import axios from "axios";
 
-const BASE_URL = "http://localhost:5000/api/auth";
+/* =========================================
+   AXIOS INSTANCE
+========================================= */
+
+const API = axios.create({
+  baseURL: "http://localhost:5000/api",
+});
+
+/* =========================================
+   REQUEST INTERCEPTOR (Attach Token Automatically)
+========================================= */
+
+API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/* =========================================
+   AUTH APIs
+========================================= */
 
 // -------------------
 // Register User
 // -------------------
 export const registerUser = async (userData) => {
-  const response = await axios.post(`${BASE_URL}/register`, userData);
-  return response.data;
+  const { data } = await API.post("/auth/register", userData);
+  return data;
 };
 
 // -------------------
 // Login User
 // -------------------
 export const loginUser = async (credentials) => {
-  const response = await axios.post(`${BASE_URL}/login`, credentials);
-  return response.data;
+  const { data } = await API.post("/auth/login", credentials);
+
+  // Store token automatically after login
+  if (data.token) {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+  }
+
+  return data;
 };
 
 // -------------------
-// Upload Aadhaar (Step 2)
+// Upload Aadhaar
 // -------------------
 export const uploadAadhaar = async (formData) => {
-  const token = localStorage.getItem("token");
+  const { data } = await API.put("/auth/upload-aadhaar", formData);
 
-  const response = await axios.put(
-    `${BASE_URL}/upload-aadhaar`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  const updatedUser = await getCurrentUser();
+  localStorage.setItem("user", JSON.stringify(updatedUser));
 
-  return response.data;
+  return data;
+};
+
+
+// -------------------
+// Get Current User
+// -------------------
+export const getCurrentUser = async () => {
+  const { data } = await API.get("/auth/me");
+  return data;
 };
 
 // -------------------
-// Get all users (Admin)
+// Upload Profile Photo
+// -------------------
+export const uploadProfilePhoto = async (formData) => {
+  const { data } = await API.post("/auth/upload-profile-photo", formData);
+  return data;
+};
+
+/* =========================================
+   ADMIN APIs
+========================================= */
+
+// -------------------
+// Get All Users
 // -------------------
 export const getAllUsers = async () => {
-  const token = localStorage.getItem("token");
-
-  const response = await axios.get(
-    "http://localhost:5000/api/admin/users",
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  return response.data;
+  const { data } = await API.get("/auth/users");
+  return data;
 };
 
 // -------------------
-// Approve User (Admin)
+// Approve User
 // -------------------
 export const approveUser = async (userId) => {
-  const token = localStorage.getItem("token");
-
-  const response = await axios.put(
-    `http://localhost:5000/api/admin/users/${userId}/approve`,
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  return response.data;
-};
-// -------------------
-
-
-
-//------get current user-----------//
-export const getCurrentUser = async () => {
-  const token = localStorage.getItem("token");
-
-  const response = await axios.get(`${BASE_URL}/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  return response.data;
+  const { data } = await API.put(`/auth/approve/${userId}`);
+  return data;
 };
 
-
-//============upload profile pic===============/
-export const uploadProfilePhoto = async (formData) => {
-  const token = localStorage.getItem("token");
-
-  const response = await axios.post(
-    "http://localhost:5000/api/auth/upload-profile-photo",
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
-
-  return response.data;
-};
-
+/* =========================================
+   LOGOUT
+========================================= */
 
 export const logoutUser = () => {
   localStorage.removeItem("token");

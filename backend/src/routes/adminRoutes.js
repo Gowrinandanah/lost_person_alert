@@ -8,21 +8,21 @@ const Report = require("../models/Report");
 const Response = require("../models/Response");
 
 const protect = require("../middleware/authMiddleware");
-const { primaryAdminOnly,secondaryAdminOnly } = require("../middleware/adminMiddleware");
+const adminOnly = require("../middleware/adminMiddleware");
 
 /* ===========================================
-   REPORT MANAGEMENT (PRIMARY ADMIN)
+   REPORT MANAGEMENT (ADMIN)
 =========================================== */
 
-// GET ALL REPORTS (for admin panel)
+// GET ALL REPORTS
 router.get(
   "/reports",
   protect,
-  secondaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
       const reports = await Report.find()
-        .populate("user", "name email phone aadhaarVerified isFlagged")
+        .populate("user", "name email phone aadhaarStatus isFlagged")
         .sort({ createdAt: -1 });
 
       res.json(reports);
@@ -36,11 +36,11 @@ router.get(
 router.get(
   "/reports/:id",
   protect,
-  secondaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
       const report = await Report.findById(req.params.id)
-        .populate("user", "name email phone aadhaarVerified isFlagged");
+        .populate("user", "name email phone aadhaarStatus isFlagged");
 
       if (!report) {
         return res.status(404).json({ message: "Report not found" });
@@ -57,14 +57,15 @@ router.get(
 router.put(
   "/reports/:id",
   protect,
-  secondaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
       const { status } = req.body;
 
       const report = await Report.findById(req.params.id);
-      if (!report)
+      if (!report) {
         return res.status(404).json({ message: "Report not found" });
+      }
 
       report.status = status;
       await report.save();
@@ -77,17 +78,17 @@ router.put(
 );
 
 /* ===========================================
-   USERS MANAGEMENT (PRIMARY ADMIN ONLY)
+   USER MANAGEMENT (ADMIN)
 =========================================== */
 
-// GET Non-Verified Users
+// GET Pending Users
 router.get(
-  "/users/non-verified",
+  "/users/pending",
   protect,
-  primaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
-      const users = await User.find({ aadhaarVerified: false })
+      const users = await User.find({ aadhaarStatus: "pending" })
         .select("-password")
         .sort({ createdAt: -1 });
 
@@ -98,14 +99,14 @@ router.get(
   }
 );
 
-// GET Verified Users
+// GET Approved Users
 router.get(
-  "/users/verified",
+  "/users/approved",
   protect,
-  primaryAdminOnly,secondaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
-      const users = await User.find({ aadhaarVerified: true })
+      const users = await User.find({ aadhaarStatus: "approved" })
         .select("-password")
         .sort({ createdAt: -1 });
 
@@ -120,14 +121,21 @@ router.get(
 router.put(
   "/users/:id/verify-aadhaar",
   protect,
-  primaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
       const user = await User.findById(req.params.id);
-      if (!user)
+      if (!user) {
         return res.status(404).json({ message: "User not found" });
+      }
 
-      user.aadhaarVerified = true;
+      if (user.aadhaarStatus !== "pending") {
+        return res.status(400).json({
+          message: "User Aadhaar is not in pending state",
+        });
+      }
+
+      user.aadhaarStatus = "approved";
       await user.save();
 
       res.json({ message: "User Aadhaar verified successfully" });
@@ -141,12 +149,13 @@ router.put(
 router.put(
   "/users/:id/flag",
   protect,
-  primaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
       const user = await User.findById(req.params.id);
-      if (!user)
+      if (!user) {
         return res.status(404).json({ message: "User not found" });
+      }
 
       user.isFlagged = true;
       await user.save();
@@ -162,12 +171,13 @@ router.put(
 router.delete(
   "/users/:id",
   protect,
-  primaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
       const user = await User.findById(req.params.id);
-      if (!user)
+      if (!user) {
         return res.status(404).json({ message: "User not found" });
+      }
 
       await user.deleteOne();
       res.json({ message: "User deleted successfully" });
@@ -181,14 +191,15 @@ router.delete(
 router.get(
   "/users/:id/details",
   protect,
-  primaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
       const userId = req.params.id;
 
       const user = await User.findById(userId).select("-password");
-      if (!user)
+      if (!user) {
         return res.status(404).json({ message: "User not found" });
+      }
 
       const reports = await Report.find({ user: userId }).sort({
         createdAt: -1,

@@ -3,21 +3,21 @@ const router = express.Router();
 
 const Report = require("../models/Report");
 const protect = require("../middleware/authMiddleware");
-const { secondaryAdminOnly } = require("../middleware/adminMiddleware");
+const adminOnly = require("../middleware/adminMiddleware");
 const upload = require("../config/multer");
 
 /* ===========================================
-   Aadhaar Verified Middleware (Users Only)
+   Aadhaar Approved Middleware (Users Only)
 =========================================== */
 
 const aadhaarOnly = (req, res, next) => {
-  if (req.user && req.user.aadhaarVerified) {
-    next();
-  } else {
-    return res.status(403).json({
-      message: "Aadhaar verification required to submit reports.",
-    });
+  if (req.user && req.user.aadhaarStatus === "approved") {
+    return next();
   }
+
+  return res.status(403).json({
+    message: "Aadhaar approval required to submit reports.",
+  });
 };
 
 /* ===========================================
@@ -48,18 +48,18 @@ router.post(
 );
 
 /* ===========================================
-   SECONDARY ADMIN REPORT MANAGEMENT
+   ADMIN REPORT MANAGEMENT
 =========================================== */
 
 // GET ALL REPORTS
 router.get(
   "/admin/all",
   protect,
-  secondaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
       const reports = await Report.find()
-        .populate("user", "name email phone aadhaarVerified")
+        .populate("user", "name email phone aadhaarStatus")
         .sort({ createdAt: -1 });
 
       res.json(reports);
@@ -73,14 +73,15 @@ router.get(
 router.get(
   "/admin/:id",
   protect,
-  secondaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
       const report = await Report.findById(req.params.id)
-        .populate("user", "name email phone");
+        .populate("user", "name email phone aadhaarStatus");
 
-      if (!report)
+      if (!report) {
         return res.status(404).json({ message: "Report not found" });
+      }
 
       res.json(report);
     } catch (error) {
@@ -93,12 +94,13 @@ router.get(
 router.put(
   "/admin/:id/approve",
   protect,
-  secondaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
       const report = await Report.findById(req.params.id);
-      if (!report)
+      if (!report) {
         return res.status(404).json({ message: "Report not found" });
+      }
 
       report.status = "approved";
       await report.save();
@@ -114,12 +116,13 @@ router.put(
 router.put(
   "/admin/:id/reject",
   protect,
-  secondaryAdminOnly,
+  adminOnly,
   async (req, res) => {
     try {
       const report = await Report.findById(req.params.id);
-      if (!report)
+      if (!report) {
         return res.status(404).json({ message: "Report not found" });
+      }
 
       report.status = "rejected";
       await report.save();
@@ -154,8 +157,9 @@ router.get("/:id", async (req, res) => {
       status: "approved",
     }).populate("user", "name");
 
-    if (!report)
+    if (!report) {
       return res.status(404).json({ message: "Report not found" });
+    }
 
     res.json(report);
   } catch (error) {

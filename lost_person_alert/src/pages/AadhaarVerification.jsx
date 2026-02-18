@@ -1,6 +1,6 @@
-// src/pages/AadhaarVerification.jsx
 import React, { useState } from "react";
 import { uploadAadhaar } from "../services/authApi";
+import { ShieldCheck, CreditCard, Image } from "lucide-react";
 
 const AadhaarVerification = () => {
   const [aadhaarNumber, setAadhaarNumber] = useState("");
@@ -15,9 +15,7 @@ const AadhaarVerification = () => {
 
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
+      reader.onloadend = () => setPreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
@@ -25,7 +23,6 @@ const AadhaarVerification = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic Aadhaar validation (12 digits)
     const aadhaarRegex = /^\d{12}$/;
     if (!aadhaarRegex.test(aadhaarNumber)) {
       setMessage("Aadhaar number must be exactly 12 digits.");
@@ -53,72 +50,81 @@ const AadhaarVerification = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 px-4">
-      <div className="bg-white w-full max-w-lg p-8 rounded-3xl shadow-2xl">
-        
-        {/* Title */}
-        <h2 className="text-2xl font-bold text-center text-indigo-600 mb-2">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+      <div className="w-full max-w-lg bg-white p-10 rounded-3xl shadow-xl border">
+
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <div className="bg-emerald-600 p-2 rounded-lg">
+            <ShieldCheck className="text-white" size={24} />
+          </div>
+          <span className="text-xl font-black uppercase tracking-tight">
+            Safe<span className="text-emerald-600">Return</span>
+          </span>
+        </div>
+
+        <h2 className="text-2xl font-black text-center text-slate-900 mb-2">
           Aadhaar Verification
         </h2>
 
-        <p className="text-sm text-gray-500 text-center mb-6">
-          To ensure authenticity and prevent misuse, Aadhaar verification is required before reporting a missing person.
+        <p className="text-sm text-slate-500 text-center mb-8">
+          Verification is required before reporting a missing person.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* Aadhaar Number */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Aadhaar Number
-            </label>
+          <div className="relative">
+            <CreditCard
+              size={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            />
             <input
               type="text"
               placeholder="Enter 12-digit Aadhaar Number"
               maxLength={12}
               value={aadhaarNumber}
               onChange={(e) => setAadhaarNumber(e.target.value)}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-400 focus:outline-none"
               required
+              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5"
             />
           </div>
 
           {/* File Upload */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Upload Aadhaar Card Photo
+            <label className="text-xs uppercase font-bold text-slate-400">
+              Upload Aadhaar Photo
             </label>
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="w-full text-sm"
-              required
-            />
-
-            <p className="text-xs text-gray-500 mt-1">
-              Upload a clear image of your Aadhaar card.
-            </p>
-          </div>
-
-          {/* Image Preview */}
-          {preview && (
-            <div className="mt-4">
-              <p className="text-sm font-medium mb-2">Preview:</p>
-              <img
-                src={preview}
-                alt="Aadhaar Preview"
-                className="w-full rounded-xl border shadow-sm"
+            <div className="relative mt-2">
+              <Image
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                required
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl file:mr-3 file:py-1 file:px-3 file:border-0 file:rounded-lg file:bg-emerald-600 file:text-white file:text-sm hover:file:bg-emerald-700"
               />
             </div>
+          </div>
+
+          {/* Preview */}
+          {preview && (
+            <img
+              src={preview}
+              alt="Aadhaar Preview"
+              className="w-full rounded-xl border mt-4"
+            />
           )}
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 transition text-white py-3 rounded-xl font-semibold shadow-md"
+            className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-emerald-600 transition"
           >
             {loading ? "Submitting..." : "Submit for Verification"}
           </button>
@@ -126,17 +132,15 @@ const AadhaarVerification = () => {
 
         {/* Message */}
         {message && (
-          <div className="mt-6 text-center">
-            <p
-              className={`text-sm font-medium ${
-                message.toLowerCase().includes("fail")
-                  ? "text-red-500"
-                  : "text-green-600"
-              }`}
-            >
-              {message}
-            </p>
-          </div>
+          <p
+            className={`mt-6 text-center text-sm font-medium ${
+              message.toLowerCase().includes("fail")
+                ? "text-red-500"
+                : "text-emerald-600"
+            }`}
+          >
+            {message}
+          </p>
         )}
       </div>
     </div>

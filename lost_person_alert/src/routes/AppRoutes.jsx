@@ -15,48 +15,14 @@ import MissingPersonDetails from "../pages/MissingPersonDetails";
 import ReportDetails from "../pages/ReportDetails";
 
 /* ===========================================
-   🔐 GENERAL ADMIN ROUTE (Both Admins)
+   🔐 ADMIN ROUTE (Single Admin Role)
 =========================================== */
 const AdminRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
 
   if (loading) return null;
 
-  if (
-    !user ||
-    (user.role !== "primaryAdmin" &&
-      user.role !== "secondaryAdmin")
-  ) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
-
-/* ===========================================
-   👑 PRIMARY ADMIN ONLY ROUTE
-=========================================== */
-const PrimaryAdminRoute = ({ children }) => {
-  const { user, loading } = useContext(AuthContext);
-
-  if (loading) return null;
-
-  if (!user || user.role !== "primaryAdmin") {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
-
-/* ===========================================
-   🧑‍💼 SECONDARY ADMIN ONLY ROUTE
-=========================================== */
-const SecondaryAdminRoute = ({ children }) => {
-  const { user, loading } = useContext(AuthContext);
-
-  if (loading) return null;
-
-  if (!user || user.role !== "secondaryAdmin") {
+  if (!user || user.role !== "admin") {
     return <Navigate to="/" replace />;
   }
 
@@ -77,7 +43,7 @@ const AppRoutes = () => {
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/person/:id" element={<MissingPersonDetails />} />
 
-      {/* 🏢 Admin Dashboard (Both Admins) */}
+      {/* 🏢 Admin Dashboard */}
       <Route
         path="/admin"
         element={
@@ -87,13 +53,13 @@ const AppRoutes = () => {
         }
       />
 
-      {/* 📄 Report Details (Secondary Admin Only) */}
+      {/* 📄 Report Details (Admin Only) */}
       <Route
         path="/admin/reports/:id"
         element={
-          <SecondaryAdminRoute>
+          <AdminRoute>
             <ReportDetails />
-          </SecondaryAdminRoute>
+          </AdminRoute>
         }
       />
     </Routes>

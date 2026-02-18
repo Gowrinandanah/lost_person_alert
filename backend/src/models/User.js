@@ -27,17 +27,19 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
-    //  Updated role system (future-proof)
+    
     role: {
       type: String,
-      enum: ["user", "secondaryAdmin", "primaryAdmin"],
+      enum: ["user", "admin"],
       default: "user",
     },
 
-    aadhaarVerified: {
-     type: Boolean,
-     default: false
-    }, 
+    aadhaarStatus: {
+      type: String,
+      enum: ["not_uploaded", "pending", "approved", "rejected"],
+      default: "not_uploaded",
+    },
+ 
 
     aadhaarNumber: {
       type: String,

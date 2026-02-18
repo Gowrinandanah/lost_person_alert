@@ -64,87 +64,20 @@ router.post("/login", async (req, res) => {
     res.json({
       token,
       user: {
-        id: user._id,
+      id: user._id,
     name: user.name,
     email: user.email,
     phone: user.phone,
     role: user.role,
     homeLocation: user.homeLocation,
-    aadhaarNumber: user.aadhaarNumber,
-    aadhaarPhoto: user.aadhaarPhoto,
-    isApproved: user.isApproved,
-    isVerified: user.isVerified,
+    aadhaarStatus: user.aadhaarStatus,
+    profilePhoto: user.profilePhoto,
       },
     });
 
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-});
-
-
-// ================= UPLOAD AADHAAR =================
-router.put("/upload-aadhaar", protect, async (req, res) => {
-  try {
-    const { aadhaarNumber, aadhaarPhoto } = req.body;
-
-    if (!aadhaarNumber || !aadhaarPhoto) {
-      return res.status(400).json({ message: "Aadhaar details required" });
-    }
-
-    const user = await User.findById(req.user.id);
-
-    user.aadhaarNumber = aadhaarNumber;
-    user.aadhaarPhoto = aadhaarPhoto;
-    user.isVerified = true;
-
-    await user.save();
-
-    res.json({ message: "Aadhaar uploaded. Awaiting admin approval." });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-
-// ================= ADMIN APPROVAL =================
-router.put("/approve/:id", protect, adminOnly, async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (!user.isVerified) {
-      return res.status(400).json({ message: "User has not completed Aadhaar verification" });
-    }
-
-    user.isApproved = true;
-    await user.save();
-
-    res.json({ message: "User approved successfully" });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-
-// ================= GET USERS (ADMIN) =================
-router.get("/users", protect, adminOnly, async (req, res) => {
-  const users = await User.find().select("-password");
-  res.json(users);
-});
-
-
-
-//__________------get current logged in user-------------//
-// Get current logged in user
-router.get("/me", protect, async (req, res) => {
-  const user = await User.findById(req.user.id).select("-password");
-  res.json(user);
 });
 
 
@@ -179,6 +112,73 @@ router.post(
     }
   }
 );
+
+
+
+// ================= UPLOAD AADHAAR =================
+router.put(
+  "/upload-aadhaar",
+  protect,
+  upload.single("aadhaarPhoto"),
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+
+      // 🚫 Block re-submission
+      if (user.aadhaarStatus === "pending") {
+        return res.status(400).json({
+          message: "Aadhaar already submitted and awaiting approval.",
+        });
+      }
+
+      if (user.aadhaarStatus === "approved") {
+        return res.status(400).json({
+          message: "Aadhaar already approved. Cannot re-submit.",
+        });
+      }
+
+      const { aadhaarNumber } = req.body;
+
+      if (!aadhaarNumber || !req.file) {
+        return res.status(400).json({ message: "Aadhaar details required" });
+      }
+
+      user.aadhaarNumber = aadhaarNumber;
+      user.aadhaarPhoto = req.file.path;
+      user.aadhaarStatus = "pending";
+
+      await user.save();
+
+      res.json({ message: "Aadhaar submitted for admin approval." });
+
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+
+
+
+
+// ================= GET USERS (ADMIN) =================
+router.get("/users", protect, adminOnly, async (req, res) => {
+  const users = await User.find().select("-password");
+  res.json(users);
+});
+
+
+
+//__________------get current logged in user-------------//
+// Get current logged in user
+router.get("/me", protect, async (req, res) => {
+  const user = await User.findById(req.user.id).select("-password");
+  res.json(user);
+});
+
+
+
+
 
 
 module.exports = router;

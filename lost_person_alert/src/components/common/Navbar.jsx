@@ -16,12 +16,11 @@ const Navbar = () => {
   };
 
   const isAdmin =
-    user?.role === "primaryAdmin" ||
-    user?.role === "secondaryAdmin";
+    user?.role === "admin";
 
   // ================= UPDATED REPORT HANDLER =================
   const handleReportClick = () => {
-    if (!user?.aadhaarVerified) {
+    if (!user?.aadhaarStatus === "approved") {
       const proceed = window.confirm(
         "⚠️ Aadhaar Verification Required\n\n" +
         "To prevent misuse and ensure authenticity, you must verify your Aadhaar before reporting a missing person.\n\n" +
@@ -41,7 +40,7 @@ const Navbar = () => {
   // ================= STYLES =================
 
   const navStyle = {
-    backgroundColor: "#4f46e5",
+    backgroundColor: "#0c0c0c",
     padding: "18px 0",
     display: "flex",
     justifyContent: "center",

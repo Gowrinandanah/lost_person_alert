@@ -1,12 +1,13 @@
 // src/services/reportApi.js
 import axios from "axios";
 
+// Base URLs
 const API_BASE = "http://localhost:5000/api";
 const ADMIN_BASE = "http://localhost:5000/api/admin";
 
+// Attach JWT token
 const getAuthHeader = () => {
   const token = localStorage.getItem("token");
-
   return {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -14,40 +15,32 @@ const getAuthHeader = () => {
   };
 };
 
-// ========================
-// 🌍 PUBLIC REPORTS
-// ========================
-
+// Public - get active reports
 export const getActiveReports = async () => {
-  const response = await axios.get(`${API_BASE}/reports/active`);
-  return response.data;
+  const { data } = await axios.get(`${API_BASE}/reports/active`);
+  return data;
 };
 
+// Public - get report by id
 export const getReportById = async (id) => {
-  const response = await axios.get(`${API_BASE}/reports/${id}`);
-  return response.data;
+  const { data } = await axios.get(`${API_BASE}/reports/${id}`);
+  return data;
 };
 
-// ========================
-// 👤 USER REPORTS
-// ========================
-
+// User - get logged in user's reports
 export const getMyReports = async () => {
-  const response = await axios.get(
+  const { data } = await axios.get(
     `${API_BASE}/reports/my-reports`,
     getAuthHeader()
   );
-  return response.data;
+  return data;
 };
 
-// ========================
-// ➕ CREATE REPORT (NEW)
-// ========================
-
+// User - create new report
 export const createReport = async (formData) => {
   const token = localStorage.getItem("token");
 
-  const response = await axios.post(
+  const { data } = await axios.post(
     `${API_BASE}/reports`,
     formData,
     {
@@ -58,65 +51,53 @@ export const createReport = async (formData) => {
     }
   );
 
-  return response.data;
+  return data;
 };
 
-/// ========================
-// 🛠 ADMIN REPORTS
-// ========================
-
+// Admin - get all reports
 export const getAllReportsAdmin = async () => {
-  const response = await axios.get(
+  const { data } = await axios.get(
     `${API_BASE}/reports/admin/all`,
     getAuthHeader()
   );
-  return response.data;
+  return data;
 };
 
+// Admin - get report by id
 export const getAdminReportById = async (id) => {
-  const response = await axios.get(
+  const { data } = await axios.get(
     `${API_BASE}/reports/admin/${id}`,
     getAuthHeader()
   );
-  return response.data;
+  return data;
 };
 
+// Admin - approve or reject report
 export const updateReportStatus = async (id, status) => {
   const endpoint =
     status === "approved"
       ? `${API_BASE}/reports/admin/${id}/approve`
       : `${API_BASE}/reports/admin/${id}/reject`;
 
-  const response = await axios.put(
-    endpoint,
-    {},
-    getAuthHeader()
-  );
-
-  return response.data;
+  const { data } = await axios.put(endpoint, {}, getAuthHeader());
+  return data;
 };
 
-// ========================
-// 🚩 FLAG USER
-// ========================
-
+// Admin - flag user
 export const flagUser = async (id) => {
-  const response = await axios.put(
+  const { data } = await axios.put(
     `${ADMIN_BASE}/users/${id}/flag`,
     {},
     getAuthHeader()
   );
-  return response.data;
+  return data;
 };
 
-// ========================
-// 🔍 ADMIN - USER DETAILS
-// ========================
-
+// Admin - get user details
 export const getUserDetails = async (id) => {
-  const response = await axios.get(
+  const { data } = await axios.get(
     `${ADMIN_BASE}/users/${id}/details`,
     getAuthHeader()
   );
-  return response.data;
+  return data;
 };
