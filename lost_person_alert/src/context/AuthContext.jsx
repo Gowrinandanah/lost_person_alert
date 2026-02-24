@@ -22,7 +22,6 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, jwtToken) => {
     localStorage.setItem("token", jwtToken);
     localStorage.setItem("user", JSON.stringify(userData));
-
     setUser(userData);
     setToken(jwtToken);
   };
@@ -30,9 +29,14 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
     setUser(null);
     setToken(null);
+  };
+
+  // ADD THIS - to update user after Aadhaar upload, profile update, etc.
+  const updateUser = (updatedUserData) => {
+    localStorage.setItem("user", JSON.stringify(updatedUserData));
+    setUser(updatedUserData);
   };
 
   return (
@@ -42,6 +46,7 @@ export const AuthProvider = ({ children }) => {
         token,
         login,
         logout,
+        updateUser, // ADDED
         isAuthenticated: !!token,
         loading,
       }}

@@ -1,4 +1,5 @@
 // src/pages/AadhaarVerification.jsx
+
 import React, { useState } from "react";
 import { uploadAadhaar } from "../services/authApi";
 
@@ -15,9 +16,7 @@ const AadhaarVerification = () => {
 
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
+      reader.onloadend = () => setPreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
@@ -25,7 +24,6 @@ const AadhaarVerification = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic Aadhaar validation (12 digits)
     const aadhaarRegex = /^\d{12}$/;
     if (!aadhaarRegex.test(aadhaarNumber)) {
       setMessage("Aadhaar number must be exactly 12 digits.");
@@ -53,91 +51,94 @@ const AadhaarVerification = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 px-4">
-      <div className="bg-white w-full max-w-lg p-8 rounded-3xl shadow-2xl">
-        
-        {/* Title */}
-        <h2 className="text-2xl font-bold text-center text-indigo-600 mb-2">
-          Aadhaar Verification
-        </h2>
+    <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center p-4">
+      <div className="card shadow-lg border-0" style={{ maxWidth: "500px", width: "100%" }}>
 
-        <p className="text-sm text-gray-500 text-center mb-6">
-          To ensure authenticity and prevent misuse, Aadhaar verification is required before reporting a missing person.
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-
-          {/* Aadhaar Number */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Aadhaar Number
-            </label>
-            <input
-              type="text"
-              placeholder="Enter 12-digit Aadhaar Number"
-              maxLength={12}
-              value={aadhaarNumber}
-              onChange={(e) => setAadhaarNumber(e.target.value)}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-              required
-            />
+        {/* Header */}
+        <div className="card-header bg-white border-0 text-center pt-5">
+          <div className="bg-success bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
+            <span className="text-success fw-bold fs-4">✓</span>
           </div>
+          <h2 className="fw-bold">Aadhaar Verification</h2>
+          <p className="text-secondary small">Required before reporting a missing person</p>
+        </div>
 
-          {/* File Upload */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Upload Aadhaar Card Photo
-            </label>
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="w-full text-sm"
-              required
-            />
-
-            <p className="text-xs text-gray-500 mt-1">
-              Upload a clear image of your Aadhaar card.
-            </p>
-          </div>
-
-          {/* Image Preview */}
-          {preview && (
-            <div className="mt-4">
-              <p className="text-sm font-medium mb-2">Preview:</p>
-              <img
-                src={preview}
-                alt="Aadhaar Preview"
-                className="w-full rounded-xl border shadow-sm"
+        {/* Body */}
+        <div className="card-body px-5 pb-5">
+          <form onSubmit={handleSubmit}>
+            
+            {/* Aadhaar Number */}
+            <div className="mb-4">
+              <label className="form-label fw-bold small text-secondary">AADHAAR NUMBER</label>
+              <input
+                type="text"
+                className="form-control form-control-lg bg-light border"
+                placeholder="Enter 12-digit Aadhaar Number"
+                maxLength={12}
+                value={aadhaarNumber}
+                onChange={(e) => setAadhaarNumber(e.target.value)}
+                required
               />
+            </div>
+
+            {/* File Upload */}
+            <div className="mb-4">
+              <label className="form-label fw-bold small text-secondary">UPLOAD AADHAAR PHOTO</label>
+              <input
+                type="file"
+                className="form-control form-control-lg bg-light border"
+                accept="image/*"
+                onChange={handleFileChange}
+                required
+              />
+              <div className="form-text">Accepted formats: JPG, PNG, GIF (Max 5MB)</div>
+            </div>
+
+            {/* Preview */}
+            {preview && (
+              <div className="mb-4 text-center">
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="img-fluid rounded border"
+                  style={{ maxHeight: "200px" }}
+                />
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              className="btn btn-success w-100 py-3 fw-bold"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit for Verification"
+              )}
+            </button>
+          </form>
+
+          {/* Message */}
+          {message && (
+            <div className={`alert mt-4 text-center small ${
+              message.toLowerCase().includes("fail") || message.toLowerCase().includes("invalid")
+                ? "alert-danger"
+                : "alert-success"
+            }`}>
+              {message}
             </div>
           )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 transition text-white py-3 rounded-xl font-semibold shadow-md"
-          >
-            {loading ? "Submitting..." : "Submit for Verification"}
-          </button>
-        </form>
-
-        {/* Message */}
-        {message && (
-          <div className="mt-6 text-center">
-            <p
-              className={`text-sm font-medium ${
-                message.toLowerCase().includes("fail")
-                  ? "text-red-500"
-                  : "text-green-600"
-              }`}
-            >
-              {message}
-            </p>
-          </div>
-        )}
+          {/* Note */}
+          <p className="text-secondary text-center small mt-4 mb-0">
+            Your information is secure and encrypted
+          </p>
+        </div>
       </div>
     </div>
   );

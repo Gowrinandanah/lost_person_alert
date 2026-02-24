@@ -1,3 +1,5 @@
+// src/pages/Login.jsx
+
 import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authApi";
@@ -6,17 +8,14 @@ import { AuthContext } from "../context/AuthContext";
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
+    password: "",  
   });
 
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -24,88 +23,80 @@ const Login = () => {
 
     try {
       const data = await loginUser(formData);
-
-      // ✅ Save user + token
       login(data.user, data.token);
 
-      alert("Login successful!");
-
-      // 🔥 Role-based redirection
-      if (
-        data.user.role === "secondaryAdmin" ||
-        data.user.role === "primaryAdmin"
-      ) {
+      if (data.user.role === "admin") {
         navigate("/admin");
       } else {
         navigate("/");
       }
-
     } catch (error) {
       alert(error.response?.data?.message || "Login failed");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
+    <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center p-4">
+      <div className="card shadow border-0" style={{ maxWidth: "450px", width: "100%" }}>
 
-        <h2 className="text-2xl font-bold text-center mb-6">
-          Login to Your Account
-        </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-
-          {/* Email */}
-          <div>
-            <label className="block mb-2 text-sm font-medium">
-              Email Address
-            </label>
-            <input
-              type="email"
-              name="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+        {/* Header */}
+        <div className="card-header bg-white border-0 text-center pt-5">
+          <div className="bg-success bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
+            <span className="text-success fw-bold fs-4">SR</span>
           </div>
+          <h2 className="fw-bold">Login</h2>
+          <p className="text-secondary small">Enter your credentials to continue</p>
+        </div>
 
-          {/* Password */}
-          <div>
-            <label className="block mb-2 text-sm font-medium">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+        {/* Body */}
+        <div className="card-body px-5 pb-5">
+          <form onSubmit={handleSubmit}>
+
+            {/* Email */}
+            <div className="mb-4">
+              <label className="form-label fw-bold small text-secondary">EMAIL</label>
+              <input
+                type="email"
+                name="email"
+                className="form-control form-control-lg bg-light border"
+                placeholder="name@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div className="mb-4">
+              <label className="form-label fw-bold small text-secondary">PASSWORD</label>
+              <input
+                type="password"
+                name="password"
+                className="form-control form-control-lg bg-light border"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              className="btn btn-success w-100 py-3 fw-bold"
+            >
+              Sign In
+            </button>
+          </form>
+
+          {/* Register Link */}
+          <div className="text-center mt-4 text-secondary">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-success fw-bold text-decoration-none">
+              Create Account
+            </Link>
           </div>
-
-          {/* Button */}
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 transition duration-200 font-semibold"
-          >
-            Login
-          </button>
-        </form>
-
-        <p className="text-sm text-center mt-5">
-          Don’t have an account?{" "}
-          <Link
-            to="/register"
-            className="text-indigo-600 font-medium hover:underline"
-          >
-            Register
-          </Link>
-        </p>
-
+        </div>
       </div>
     </div>
   );

@@ -3,64 +3,44 @@ const bcrypt = require("bcryptjs");
 const connectDB = require("./src/config/db");
 const User = require("./src/models/User");
 
-const createAdmins = async () => {
+const createAdmin = async () => {
   try {
     await connectDB();
 
     /* ===========================================
-       👑 CREATE PRIMARY ADMIN
+       👑 CREATE SINGLE ADMIN
     =========================================== */
 
-    const existingPrimary = await User.findOne({ role: "primaryAdmin" });
+    const existingAdmin = await User.findOne({ role: "admin" });
 
-    if (!existingPrimary) {
-      const primaryPassword = await bcrypt.hash("primary123", 10);
-
-      const primaryAdmin = new User({
-        name: "Primary Admin",
-        email: "primary@lostalert.com",
-        phone: "9000000001",
-        password: primaryPassword,
-        role: "primaryAdmin",
-        aadhaarVerified: true,
-      });
-
-      await primaryAdmin.save();
-      console.log("✅ Primary Admin created");
-    } else {
-      console.log("⚠ Primary Admin already exists");
+    if (existingAdmin) {
+      console.log("⚠ Admin already exists");
+      process.exit();
     }
 
-    /* ===========================================
-       🧑‍💼 CREATE SECONDARY ADMIN
-    =========================================== */
+    const hashedPassword = await bcrypt.hash("admin", 10);
 
-    const existingSecondary = await User.findOne({ role: "secondaryAdmin" });
+    const admin = new User({
+      name: "System Admin",
+      email: "admin@gmail.com",
+      phone: "9000000000",
+      password: hashedPassword,
+      role: "admin",
+      aadhaarStatus: "approved",
+      isFlagged: false,
+    });
 
-    if (!existingSecondary) {
-      const secondaryPassword = await bcrypt.hash("secondary123", 10);
+    await admin.save();
 
-      const secondaryAdmin = new User({
-        name: "Secondary Admin",
-        email: "secondary@lostalert.com",
-        phone: "9000000002",
-        password: secondaryPassword,
-        role: "secondaryAdmin",
-        aadhaarVerified: true,
-      });
+    console.log("✅ Admin created successfully");
+    console.log("📧 Email: admin@lostalert.com");
+    console.log("🔑 Password: Admin@123");
 
-      await secondaryAdmin.save();
-      console.log("✅ Secondary Admin created");
-    } else {
-      console.log("⚠ Secondary Admin already exists");
-    }
-
-    console.log("\n🎉 Admin setup completed");
     process.exit();
   } catch (error) {
-    console.error("❌ Error creating admins:", error);
+    console.error("❌ Error creating admin:", error);
     process.exit(1);
   }
 };
 
-createAdmins();
+createAdmin();

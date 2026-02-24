@@ -1,3 +1,5 @@
+//src/models/User.js
+
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
@@ -7,7 +9,6 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-
     email: {
       type: String,
       required: true,
@@ -15,62 +16,60 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-
     phone: {
       type: String,
       required: true,
       trim: true,
     },
-
     password: {
       type: String,
-      required: true,
+      required: function() {
+        return this.role !== 'guest';
+      },
     },
-
-    //  Updated role system (future-proof)
     role: {
       type: String,
-      enum: ["user", "secondaryAdmin", "primaryAdmin"],
+      enum: ["user", "admin", "guest"],
       default: "user",
     },
-
-    aadhaarVerified: {
-     type: Boolean,
-     default: false
-    }, 
-
-    aadhaarNumber: {
+    //  For police station/district admins
+    district: {
       type: String,
-      trim: true,
+      trim:true,
+      default: "GENERAL",
+      required: function() {
+        return this.role === 'admin';
+      }
     },
-
-    aadhaarPhoto: {
+    aadhaarStatus: {
       type: String,
+      enum: ["not_uploaded", "pending", "approved", "rejected"],
+      default: "not_uploaded",
     },
-
+    aadhaarNumber: String,
+    aadhaarPhoto: String,
     homeLocation: {
       latitude: Number,
       longitude: Number,
     },
-
     currentLocation: {
       latitude: Number,
       longitude: Number,
     },
-
     lastLocationUpdatedAt: Date,
-
     fcmToken: String,
-
-    profilePhoto: {
-      type: String,
-    },
-
+    profilePhoto: String,
     isFlagged: {
       type: Boolean,
       default: false
     },
-
+    // Guest user fields
+    radius: Number,
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+    unsubscribeToken: String,
   },
   { timestamps: true }
 );

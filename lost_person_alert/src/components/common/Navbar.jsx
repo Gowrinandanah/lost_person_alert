@@ -1,7 +1,9 @@
+// src/components/common/Navbar.jsx
+
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import { FaUserCircle, FaBell } from "react-icons/fa";
+import { FaUserCircle, FaBell, FaEye } from "react-icons/fa";
 
 const Navbar = () => {
   const [hovered, setHovered] = useState(null);
@@ -15,33 +17,77 @@ const Navbar = () => {
     navigate("/login");
   };
 
-  const isAdmin =
-    user?.role === "primaryAdmin" ||
-    user?.role === "secondaryAdmin";
+  const isAdmin = user?.role === "admin";
 
-  // ================= UPDATED REPORT HANDLER =================
+  // ================= REPORT HANDLER =================
   const handleReportClick = () => {
-    if (!user?.aadhaarVerified) {
+    if (!isAuthenticated) {
+      const proceed = window.confirm(
+        "⚠️ Login Required\n\n" +
+          "You need to be logged in to report a missing person.\n\n" +
+          "Would you like to login now?"
+      );
+
+      if (proceed) {
+        navigate("/login");
+      }
+      return;
+    }
+
+    if (user?.aadhaarStatus !== "approved") {
       const proceed = window.confirm(
         "⚠️ Aadhaar Verification Required\n\n" +
-        "To prevent misuse and ensure authenticity, you must verify your Aadhaar before reporting a missing person.\n\n" +
-        "Would you like to verify now?"
+          "To prevent misuse and ensure authenticity, you must verify your Aadhaar before reporting a missing person.\n\n" +
+          "Would you like to verify now?"
       );
 
       if (proceed) {
         navigate("/verify-aadhaar");
       }
-
       return;
     }
 
     navigate("/report");
   };
 
-  // ================= STYLES =================
+  // ================= GENERAL SIGHTING HANDLER =================
+  const handleGeneralSightingClick = () => {
+    if (!isAuthenticated) {
+      const proceed = window.confirm(
+        "⚠️ Login Required\n\n" +
+          "You need to be logged in to report a sighting.\n\n" +
+          "Would you like to login now?"
+      );
 
+      if (proceed) {
+        navigate("/login");
+      }
+      return;
+    }
+
+    // ✅ ADD AADHAAR CHECK FOR SIGHTING TAB
+    if (user?.aadhaarStatus !== "approved") {
+      const proceed = window.confirm(
+        "⚠️ Aadhaar Verification Required\n\n" +
+          "To ensure the credibility of sightings, you must verify your Aadhaar before reporting a sighting.\n\n" +
+          "Would you like to verify now?"
+      );
+
+      if (proceed) {
+        navigate("/verify-aadhaar");
+      }
+      return;
+    }
+
+    navigate("/sighting"); // No ID = general sighting
+  };
+
+  // ================= LINKED SIGHTING HANDLER (from Alert page) =================
+  // This will be handled in the MissingPersonDetails page with similar checks
+
+  // ================= STYLES =================
   const navStyle = {
-    backgroundColor: "#4f46e5",
+    backgroundColor: "#0c0c0c",
     padding: "18px 0",
     display: "flex",
     justifyContent: "center",
@@ -115,16 +161,12 @@ const Navbar = () => {
     );
   };
 
-  const isNotificationActive =
-    location.pathname === "/notifications";
-
-  const isProfileActive =
-    location.pathname === "/profile";
+  const isNotificationActive = location.pathname === "/notifications";
+  const isProfileActive = location.pathname === "/profile";
 
   return (
     <nav style={navStyle}>
       <div style={linksContainer}>
-
         {/* Always Visible */}
         {renderLink("Home", "/")}
         {renderLink("Alerts", "/alerts")}
@@ -140,9 +182,13 @@ const Navbar = () => {
         {/* Logged In */}
         {isAuthenticated && (
           <>
-            {/* UPDATED REPORT BUTTON WITH WARNING */}
+            {/* Report Button */}
             <span
-              style={linkStyle}
+              style={{
+                ...linkStyle,
+                opacity: user?.aadhaarStatus !== "approved" ? 0.7 : 1,
+                cursor: "pointer",
+              }}
               onClick={handleReportClick}
               onMouseEnter={() => setHovered("Report")}
               onMouseLeave={() => setHovered(null)}
@@ -151,18 +197,36 @@ const Navbar = () => {
               <span
                 style={{
                   ...underlineStyle,
-                  ...(hovered === "Report"
-                    ? activeUnderline
-                    : {}),
+                  ...(hovered === "Report" ? activeUnderline : {}),
                 }}
               />
             </span>
 
-            {/* Respond Page */}
-            {renderLink("Respond", "/respond")}
+            {/* Sighting Button - NOW WITH AADHAAR CHECK */}
+            <span
+              style={{
+                ...linkStyle,
+                opacity: user?.aadhaarStatus !== "approved" ? 0.7 : 1,
+                cursor: "pointer",
+              }}
+              onClick={handleGeneralSightingClick}
+              onMouseEnter={() => setHovered("Sighting")}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <FaEye size={16} />
+                Sighting
+              </span>
+              <span
+                style={{
+                  ...underlineStyle,
+                  ...(hovered === "Sighting" ? activeUnderline : {}),
+                }}
+              />
+            </span>
 
             {/* Admin Dashboard */}
-            {isAdmin && renderLink("Admin Dashboard", "/admin")}
+            {isAdmin && renderLink("Admin", "/admin")}
 
             {/* Notifications */}
             <Link
@@ -197,9 +261,7 @@ const Navbar = () => {
               <span
                 style={{
                   ...underlineStyle,
-                  ...(hovered === "Logout"
-                    ? activeUnderline
-                    : {}),
+                  ...(hovered === "Logout" ? activeUnderline : {}),
                 }}
               />
             </span>
