@@ -1,7 +1,8 @@
+// src/pages/Register.jsx
+
 import React, { useState } from "react";
 import { registerUser } from "../services/authApi";
 import { useNavigate, Link } from "react-router-dom";
-import { User, Mail, Phone, Lock, MapPin, ShieldCheck } from "lucide-react";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -72,121 +73,140 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
-      <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-xl border">
+    <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center p-4">
+      <div className="card shadow border-0" style={{ maxWidth: "800px", width: "100%" }}>
 
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="bg-emerald-600 p-2 rounded-lg">
-            <ShieldCheck className="text-white" size={24} />
+        {/* Header */}
+        <div className="card-header bg-white border-0 text-center pt-5">
+          <div className="bg-success bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
+            <span className="text-success fw-bold fs-4">SR</span>
           </div>
-          <span className="text-xl font-black uppercase tracking-tight">
-            Safe<span className="text-emerald-600">Return</span>
-          </span>
+          <h2 className="fw-bold">Create Account</h2>
+          <p className="text-secondary small">Join the SafeReturn network</p>
         </div>
 
-        <h2 className="text-3xl font-black text-center text-slate-900 mb-2">
-          Register
-        </h2>
-        <p className="text-center text-slate-500 mb-8">
-          Create your verified account
-        </p>
+        {/* Body */}
+        <div className="card-body px-5 pb-5">
+          <form onSubmit={handleSubmit}>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-
-          {/* Name */}
-          <div className="relative">
-            <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              name="name"
-              placeholder="Full Name"
-              required
-              onChange={handleChange}
-              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5"
-            />
-          </div>
-
-          {/* Email */}
-          <div className="relative">
-            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              name="email"
-              type="email"
-              placeholder="Email"
-              required
-              onChange={handleChange}
-              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5"
-            />
-          </div>
-
-          {/* Phone */}
-          <div className="relative">
-            <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              name="phone"
-              placeholder="Phone"
-              required
-              onChange={handleChange}
-              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5"
-            />
-          </div>
-
-          {/* Password */}
-          <div className="relative">
-            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              name="password"
-              type="password"
-              placeholder="Password"
-              required
-              onChange={handleChange}
-              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5"
-            />
-          </div>
-
-          {/* Location */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <MapPin size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            {/* Name */}
+            <div className="mb-3">
+              <label className="form-label fw-bold small text-secondary">FULL NAME</label>
               <input
-                value={location}
-                readOnly
-                placeholder="Home Location"
-                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl"
+                name="name"
+                type="text"
+                className="form-control form-control-lg bg-light border"
+                placeholder="Enter your full name"
+                value={formData.name}
+                onChange={handleChange}
+                required
               />
             </div>
+
+            {/* Email */}
+            <div className="mb-3">
+              <label className="form-label fw-bold small text-secondary">EMAIL</label>
+              <input
+                name="email"
+                type="email"
+                className="form-control form-control-lg bg-light border"
+                placeholder="name@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* Phone */}
+            <div className="mb-3">
+              <label className="form-label fw-bold small text-secondary">PHONE</label>
+              <input
+                name="phone"
+                type="tel"
+                className="form-control form-control-lg bg-light border"
+                placeholder="Enter your phone number"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div className="mb-3">
+              <label className="form-label fw-bold small text-secondary">PASSWORD</label>
+              <input
+                name="password"
+                type="password"
+                className="form-control form-control-lg bg-light border"
+                placeholder="Create a password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* Location */}
+            <div className="mb-4">
+              <label className="form-label fw-bold small text-secondary">HOME LOCATION</label>
+              <div className="input-group">
+                <input
+                  type="text"
+                  className="form-control form-control-lg bg-light border"
+                  placeholder="Click Fetch to get location"
+                  value={location}
+                  readOnly
+                />
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={fetchLocation}
+                  disabled={loadingLocation}
+                >
+                  {loadingLocation ? (
+                    <span className="spinner-border spinner-border-sm" />
+                  ) : (
+                    "Fetch"
+                  )}
+                </button>
+              </div>
+              <div className="form-text">We need your location to show nearby alerts</div>
+            </div>
+
+            {/* Submit */}
             <button
-              type="button"
-              onClick={fetchLocation}
-              className="bg-emerald-600 text-white px-4 rounded-xl font-semibold hover:bg-emerald-700 transition"
+              type="submit"
+              className="btn btn-success w-100 py-3 fw-bold"
+              disabled={loadingSubmit}
             >
-              {loadingLocation ? "..." : "Fetch"}
+              {loadingSubmit ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" />
+                  Registering...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </button>
+          </form>
+
+          {/* Message */}
+          {message && (
+            <div className={`alert mt-4 text-center small ${
+              message.toLowerCase().includes("fail") || message.toLowerCase().includes("error")
+                ? "alert-danger"
+                : "alert-success"
+            }`}>
+              {message}
+            </div>
+          )}
+
+          {/* Login Link */}
+          <div className="text-center mt-4 text-secondary">
+            Already have an account?{" "}
+            <Link to="/login" className="text-success fw-bold text-decoration-none">
+              Sign In
+            </Link>
           </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-emerald-600 transition"
-          >
-            {loadingSubmit ? "Registering..." : "Register"}
-          </button>
-        </form>
-
-        {message && (
-          <p className="mt-6 text-center text-sm text-slate-600">
-            {message}
-          </p>
-        )}
-
-        <div className="mt-8 text-center text-slate-500">
-          Already have an account?{" "}
-          <Link
-            to="/login"
-            className="text-emerald-600 font-bold hover:underline"
-          >
-            Login
-          </Link>
         </div>
       </div>
     </div>

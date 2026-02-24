@@ -1,10 +1,11 @@
+// src/pages/Alerts.jsx
+
 import React, { useEffect, useState } from "react";
 import { getActiveReports } from "../services/reportApi";
 import PersonCard from "../components/cards/PersonCard";
 
 const Alerts = () => {
   const [reports, setReports] = useState([]);
-
   const [filters, setFilters] = useState({
     name: "",
     age: "",
@@ -59,60 +60,73 @@ const Alerts = () => {
   });
 
   return (
-    <div className="min-h-screen bg-indigo-50 p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">
-        Active Alerts
-      </h1>
+    <div className="min-vh-100 bg-light p-4">
+      <div className="container">
+        
+        {/* Header */}
+        <h1 className="text-center fw-bold mb-4">Active Alerts</h1>
 
-      {/* Filters */}
-      <div className="max-w-6xl mx-auto mb-8 grid md:grid-cols-4 gap-4">
-        <input
-          type="text"
-          name="name"
-          placeholder="Search by name"
-          className="p-3 border rounded-lg shadow focus:ring-2 focus:ring-indigo-500"
-          value={filters.name}
-          onChange={handleChange}
-        />
+        {/* Filters Row */}
+        <div className="row g-3 mb-5">
+          <div className="col-md-3">
+            <input
+              type="text"
+              name="name"
+              className="form-control"
+              placeholder="Search by name"
+              value={filters.name}
+              onChange={handleChange}
+            />
+          </div>
 
-        <input
-          type="number"
-          name="age"
-          placeholder="Search by age"
-          className="p-3 border rounded-lg shadow focus:ring-2 focus:ring-indigo-500"
-          value={filters.age}
-          onChange={handleChange}
-        />
+          <div className="col-md-3">
+            <input
+              type="number"
+              name="age"
+              className="form-control"
+              placeholder="Search by age"
+              value={filters.age}
+              onChange={handleChange}
+            />
+          </div>
 
-        <input
-          type="text"
-          name="location"
-          placeholder="Search by location"
-          className="p-3 border rounded-lg shadow focus:ring-2 focus:ring-indigo-500"
-          value={filters.location}
-          onChange={handleChange}
-        />
+          <div className="col-md-3">
+            <input
+              type="text"
+              name="location"
+              className="form-control"
+              placeholder="Search by location"
+              value={filters.location}
+              onChange={handleChange}
+            />
+          </div>
 
-        <input
-          type="date"
-          name="date"
-          className="p-3 border rounded-lg shadow focus:ring-2 focus:ring-indigo-500"
-          value={filters.date}
-          onChange={handleChange}
-        />
-      </div>
-
-      {filteredReports.length === 0 ? (
-        <p className="text-center text-gray-500">
-          No matching alerts found.
-        </p>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {filteredReports.map((report) => (
-            <PersonCard key={report._id} person={report} />
-          ))}
+          <div className="col-md-3">
+            <input
+              type="date"
+              name="date"
+              className="form-control"
+              value={filters.date}
+              onChange={handleChange}
+            />
+          </div>
         </div>
-      )}
+
+        {/* Results */}
+        {filteredReports.length === 0 ? (
+          <p className="text-center text-secondary">
+            No matching alerts found.
+          </p>
+        ) : (
+          <div className="row g-4">
+            {filteredReports.map((report) => (
+              <div key={report._id} className="col-md-6 col-lg-4">
+                <PersonCard person={report} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

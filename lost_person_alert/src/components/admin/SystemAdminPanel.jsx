@@ -2,13 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { getUserDetails } from "../../services/reportApi";
+import { getUserDetails } from "../../services/authApi";
 
 const BASE_URL = "http://localhost:5000/api/admin";
 
 const SystemAdminPanel = () => {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [approvedUsers, setApprovedUsers] = useState([]);
+  const [notUploadedUsers, setNotUploadedUsers] = useState([]);
+  const [flaggedUsers, setFlaggedUsers] = useState([]);
   const [activeTab, setActiveTab] = useState("pending");
   const [loading, setLoading] = useState(false);
 
@@ -25,17 +27,25 @@ const SystemAdminPanel = () => {
     try {
       setLoading(true);
 
-      const [pendingRes, approvedRes] = await Promise.all([
+      const [pendingRes, approvedRes, notUploadedRes, flaggedRes] = await Promise.all([
         axios.get(`${BASE_URL}/users/pending`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         axios.get(`${BASE_URL}/users/approved`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        axios.get(`${BASE_URL}/users/not-uploaded`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${BASE_URL}/users/flagged`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
       setPendingUsers(pendingRes.data);
       setApprovedUsers(approvedRes.data);
+      setNotUploadedUsers(notUploadedRes.data);
+      setFlaggedUsers(flaggedRes.data);
     } catch (error) {
       console.error(error.response?.data || error.message);
     } finally {
@@ -57,6 +67,37 @@ const SystemAdminPanel = () => {
       fetchUsers();
     } catch (error) {
       console.error(error.response?.data || error.message);
+    }
+  };
+
+  /* ===========================================
+     FLAG/UNFLAG USER
+  =========================================== */
+  const handleFlagUser = async (userId, currentFlagStatus) => {
+    if (!window.confirm(`Are you sure you want to ${currentFlagStatus ? 'unflag' : 'flag'} this user?`)) {
+      return;
+    }
+
+    try {
+      await axios.put(
+        `${BASE_URL}/users/${userId}/flag`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert(`User ${currentFlagStatus ? 'unflagged' : 'flagged'} successfully`);
+      
+      // Refresh the user list
+      fetchUsers();
+      
+      // If this user's details are currently open, refresh them
+      if (selectedUser === userId) {
+        const updatedDetails = await getUserDetails(userId);
+        setUserDetails(updatedDetails);
+      }
+    } catch (error) {
+      console.error(error.response?.data || error.message);
+      alert("Failed to update user flag status");
     }
   };
 
@@ -88,193 +129,290 @@ const SystemAdminPanel = () => {
   /* ===========================================
      STATUS BADGE
   =========================================== */
-  const statusBadge = (status) => {
-    const styles = {
-      pending: "text-yellow-600 font-semibold",
-      approved: "text-green-600 font-semibold",
-      rejected: "text-red-600 font-semibold",
+  const getStatusBadge = (status) => {
+    const badges = {
+      not_uploaded: <span className="badge bg-secondary">Not Uploaded</span>,
+      pending: <span className="badge bg-warning text-dark">Pending</span>,
+      approved: <span className="badge bg-success">Approved</span>,
+      rejected: <span className="badge bg-danger">Rejected</span>,
     };
-
-    return (
-      <span className={styles[status] || "text-gray-500"}>
-        {status.toUpperCase()}
-      </span>
-    );
+    return badges[status] || <span className="badge bg-secondary">{status}</span>;
   };
 
   /* ===========================================
      USER CARD
   =========================================== */
-  const renderUserCard = (user, canVerify = false) => (
-    <div
-      key={user._id}
-      className="bg-white p-5 rounded-lg shadow flex justify-between items-center"
-    >
-      <div>
-        <p className="font-semibold text-lg">{user.name}</p>
-        <p className="text-gray-600">{user.email}</p>
-        <p className="text-gray-600">{user.phone}</p>
-        <p className="text-sm mt-1">
-          Status: {statusBadge(user.aadhaarStatus)}
-        </p>
-      </div>
+  const renderUserCard = (user, showActions = true) => (
+    <div key={user._id} className="card mb-3 shadow-sm">
+      <div className="card-body">
+        <div className="d-flex justify-content-between align-items-start">
+          <div>
+            <h5 className="card-title fw-bold mb-1">{user.name}</h5>
+            <p className="text-secondary mb-1">{user.email}</p>
+            <p className="text-secondary mb-2">{user.phone}</p>
+            <div className="d-flex gap-2 align-items-center">
+              {getStatusBadge(user.aadhaarStatus)}
+              {user.isFlagged && (
+                <span className="badge bg-danger">FLAGGED</span>
+              )}
+            </div>
+          </div>
+          
+          <div className="d-flex gap-2">
+            <button
+              onClick={() => handleViewDetails(user._id)}
+              className="btn btn-primary btn-sm"
+            >
+              Details
+            </button>
 
-      <div className="flex gap-3">
-        <button
-          onClick={() => handleViewDetails(user._id)}
-          className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded"
-        >
-          Details
-        </button>
+            {showActions && user.aadhaarStatus === "pending" && (
+              <button
+                onClick={() => verifyUser(user._id)}
+                className="btn btn-success btn-sm"
+              >
+                Approve
+              </button>
+            )}
 
-        {canVerify && user.aadhaarStatus === "pending" && (
-          <button
-            onClick={() => verifyUser(user._id)}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-          >
-            Approve
-          </button>
-        )}
+            <button
+              onClick={() => handleFlagUser(user._id, user.isFlagged)}
+              className={`btn btn-sm ${
+                user.isFlagged ? 'btn-warning' : 'btn-danger'
+              }`}
+            >
+              {user.isFlagged ? 'Unflag' : 'Flag'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
 
   /* ===========================================
+     TAB CONTENT
+  =========================================== */
+  const renderTabContent = () => {
+    if (loading) {
+      return (
+        <div className="text-center py-5">
+          <div className="spinner-border text-success" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      );
+    }
+
+    let users = [];
+    let showActions = true;
+    let emptyMessage = "";
+
+    switch(activeTab) {
+      case "notUploaded":
+        users = notUploadedUsers;
+        emptyMessage = "No users without Aadhaar upload";
+        showActions = false;
+        break;
+      case "pending":
+        users = pendingUsers;
+        emptyMessage = "No pending users";
+        break;
+      case "approved":
+        users = approvedUsers;
+        emptyMessage = "No approved users";
+        showActions = false;
+        break;
+      case "flagged":
+        users = flaggedUsers;
+        emptyMessage = "No flagged users";
+        break;
+      default:
+        users = [];
+    }
+
+    if (users.length === 0) {
+      return (
+        <div className="text-center py-5 bg-light rounded">
+          <p className="text-secondary mb-0">{emptyMessage}</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-4">
+        {users.map(user => renderUserCard(user, showActions))}
+      </div>
+    );
+  };
+
+  /* ===========================================
      UI
   =========================================== */
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">
-        System Admin – User Verification
-      </h2>
+    <div className="container-fluid p-4">
+      <h2 className="h4 fw-bold mb-4">User Management</h2>
 
       {/* Tabs */}
-      <div className="flex border-b mb-6">
-        <button
-          onClick={() => setActiveTab("pending")}
-          className={`px-6 py-2 font-semibold ${
-            activeTab === "pending"
-              ? "border-b-2 border-indigo-600 text-indigo-600"
-              : "text-gray-500"
-          }`}
-        >
-          Pending ({pendingUsers.length})
-        </button>
+      <ul className="nav nav-tabs mb-4">
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "notUploaded" ? "active fw-bold" : ""}`}
+            onClick={() => setActiveTab("notUploaded")}
+          >
+            Not Uploaded <span className="badge bg-secondary ms-1">{notUploadedUsers.length}</span>
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "pending" ? "active fw-bold" : ""}`}
+            onClick={() => setActiveTab("pending")}
+          >
+            Pending <span className="badge bg-warning text-dark ms-1">{pendingUsers.length}</span>
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "approved" ? "active fw-bold" : ""}`}
+            onClick={() => setActiveTab("approved")}
+          >
+            Approved <span className="badge bg-success ms-1">{approvedUsers.length}</span>
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "flagged" ? "active fw-bold" : ""}`}
+            onClick={() => setActiveTab("flagged")}
+          >
+            Flagged <span className="badge bg-danger ms-1">{flaggedUsers.length}</span>
+          </button>
+        </li>
+      </ul>
 
-        <button
-          onClick={() => setActiveTab("approved")}
-          className={`px-6 py-2 font-semibold ${
-            activeTab === "approved"
-              ? "border-b-2 border-indigo-600 text-indigo-600"
-              : "text-gray-500"
-          }`}
-        >
-          Approved ({approvedUsers.length})
-        </button>
-      </div>
-
-      {loading && (
-        <p className="text-center text-gray-500 mt-10">
-          Loading users...
-        </p>
-      )}
-
-      {!loading && activeTab === "pending" && (
-        <div className="space-y-4">
-          {pendingUsers.length === 0 ? (
-            <p className="text-center text-gray-500">
-              No pending users
-            </p>
-          ) : (
-            pendingUsers.map((u) => renderUserCard(u, true))
-          )}
-        </div>
-      )}
-
-      {!loading && activeTab === "approved" && (
-        <div className="space-y-4">
-          {approvedUsers.length === 0 ? (
-            <p className="text-center text-gray-500">
-              No approved users
-            </p>
-          ) : (
-            approvedUsers.map((u) => renderUserCard(u))
-          )}
-        </div>
-      )}
+      {/* Tab Content */}
+      {renderTabContent()}
 
       {/* ================= MODAL ================= */}
       {selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white w-3/4 max-h-[90vh] overflow-y-auto rounded-lg p-8 relative">
-            <button
-              onClick={closeModal}
-              className="absolute top-4 right-4 text-gray-600 text-xl"
-            >
-              ✕
-            </button>
-
-            {detailsLoading ? (
-              <p className="text-center">Loading details...</p>
-            ) : (
-              userDetails && (
-                <>
-                  <h3 className="text-xl font-bold mb-4">
-                    User Information
-                  </h3>
-
-                  <div className="grid grid-cols-2 gap-4 mb-8">
-                    <p><strong>Name:</strong> {userDetails.user.name}</p>
-                    <p><strong>Email:</strong> {userDetails.user.email}</p>
-                    <p><strong>Phone:</strong> {userDetails.user.phone}</p>
-                    <p><strong>Role:</strong> {userDetails.user.role}</p>
-                    <p>
-                      <strong>Aadhaar Status:</strong>{" "}
-                      {statusBadge(userDetails.user.aadhaarStatus)}
-                    </p>
+        <div className="modal fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-lg modal-dialog-scrollable">
+            <div className="modal-content">
+              <div className="modal-header bg-light">
+                <h5 className="modal-title">User Details</h5>
+                <button type="button" className="btn-close" onClick={closeModal}></button>
+              </div>
+              <div className="modal-body">
+                {detailsLoading ? (
+                  <div className="text-center py-4">
+                    <div className="spinner-border text-success" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
                   </div>
-
-                  <h3 className="text-xl font-bold mb-4">
-                    Reports ({userDetails.reports.length})
-                  </h3>
-
-                  {userDetails.reports.length === 0 ? (
-                    <p className="text-gray-500 mb-6">
-                      No reports submitted.
-                    </p>
-                  ) : (
-                    <div className="space-y-3 mb-8">
-                      {userDetails.reports.map((report) => (
-                        <div key={report._id} className="border p-4 rounded">
-                          <p><strong>Person:</strong> {report.personName}</p>
-                          <p><strong>Date:</strong> {new Date(report.createdAt).toLocaleString()}</p>
+                ) : (
+                  userDetails && (
+                    <>
+                      {/* User Info */}
+                      <div className="row g-3 mb-4">
+                        <div className="col-md-6">
+                          <p className="mb-1"><strong>Name:</strong> {userDetails.user.name}</p>
+                          <p className="mb-1"><strong>Email:</strong> {userDetails.user.email}</p>
+                          <p className="mb-1"><strong>Phone:</strong> {userDetails.user.phone}</p>
                         </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <h3 className="text-xl font-bold mb-4">
-                    Responses ({userDetails.responses.length})
-                  </h3>
-
-                  {userDetails.responses.length === 0 ? (
-                    <p className="text-gray-500">
-                      No responses submitted.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {userDetails.responses.map((res) => (
-                        <div key={res._id} className="border p-4 rounded">
-                          <p><strong>Report:</strong> {res.report?.personName}</p>
-                          <p><strong>Message:</strong> {res.message}</p>
-                          <p><strong>Date:</strong> {new Date(res.createdAt).toLocaleString()}</p>
+                        <div className="col-md-6">
+                          <p className="mb-1"><strong>Role:</strong> {userDetails.user.role}</p>
+                          <p className="mb-1">
+                            <strong>Aadhaar Status:</strong> {getStatusBadge(userDetails.user.aadhaarStatus)}
+                          </p>
+                          {userDetails.user.aadhaarNumber && (
+                            <p className="mb-1"><strong>Aadhaar No.:</strong> {userDetails.user.aadhaarNumber}</p>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )
-            )}
+                      </div>
+
+                      {/* Flag Status */}
+                      <div className={`alert ${userDetails.user.isFlagged ? 'alert-warning' : 'alert-success'} mb-4`}>
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <strong>{userDetails.user.isFlagged ? '⚠️ Flagged Account' : '✅ Normal Account'}</strong>
+                            {userDetails.user.isFlagged && (
+                              <p className="small mb-0 mt-1">User cannot submit new reports until unflagged.</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleFlagUser(userDetails.user._id, userDetails.user.isFlagged)}
+                            className={`btn btn-sm ${userDetails.user.isFlagged ? 'btn-warning' : 'btn-danger'}`}
+                          >
+                            {userDetails.user.isFlagged ? 'Remove Flag' : 'Flag User'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Aadhaar Photo */}
+                      {userDetails.user.aadhaarPhoto && (
+                        <div className="mb-4">
+                          <h6 className="fw-bold mb-3">Aadhaar Card</h6>
+                          <div className="border rounded p-3 bg-light text-center">
+                            <img
+                              src={`http://localhost:5000/${userDetails.user.aadhaarPhoto}`}
+                              alt="Aadhaar Card"
+                              className="img-fluid rounded"
+                              style={{ maxHeight: "300px" }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Reports */}
+                      <div className="mb-4">
+                        <h6 className="fw-bold mb-3">Reports ({userDetails.reports.length})</h6>
+                        {userDetails.reports.length === 0 ? (
+                          <p className="text-secondary small">No reports submitted</p>
+                        ) : (
+                          <div className="list-group">
+                            {userDetails.reports.map(report => (
+                              <div key={report._id} className="list-group-item">
+                                <div className="d-flex justify-content-between">
+                                  <div>
+                                    <strong>{report.personName}</strong>
+                                    <p className="small text-secondary mb-0">
+                                      {new Date(report.createdAt).toLocaleDateString()} • Status: {report.status}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Responses */}
+                      <div>
+                        <h6 className="fw-bold mb-3">Responses ({userDetails.responses.length})</h6>
+                        {userDetails.responses.length === 0 ? (
+                          <p className="text-secondary small">No responses submitted</p>
+                        ) : (
+                          <div className="list-group">
+                            {userDetails.responses.map(res => (
+                              <div key={res._id} className="list-group-item">
+                                <strong>Report: {res.report?.personName || "Unknown"}</strong>
+                                <p className="small mb-0">{res.message}</p>
+                                <p className="small text-secondary mb-0">
+                                  {new Date(res.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )
+                )}
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={closeModal}>
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

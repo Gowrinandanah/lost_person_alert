@@ -1,8 +1,8 @@
 // src/pages/Profile.jsx
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser, uploadProfilePhoto } from "../services/authApi";
-import { ShieldCheck } from "lucide-react";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -52,10 +52,33 @@ const Profile = () => {
     fetchUser();
   }, [navigate]);
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfilePhoto(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    try {
+      const formData = new FormData();
+      formData.append("profilePhoto", file);
+      const updatedUser = await uploadProfilePhoto(formData);
+      setUser(updatedUser);
+    } catch (err) {
+      console.error("❌ Failed to upload profile photo:", err);
+      alert("Failed to upload profile photo. Please try again.");
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        Loading profile...
+      <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center">
+        <div className="spinner-border text-success" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -67,140 +90,125 @@ const Profile = () => {
   const getAadhaarBadge = () => {
     switch (user.aadhaarStatus) {
       case "approved":
-        return (
-          <span className="text-emerald-600 font-semibold">Approved</span>
-        );
+        return <span className="badge bg-success">Approved</span>;
       case "pending":
-        return (
-          <span className="text-yellow-600 font-semibold">Pending Approval</span>
-        );
+        return <span className="badge bg-warning text-dark">Pending Approval</span>;
       case "rejected":
-        return <span className="text-red-500 font-semibold">Rejected</span>;
+        return <span className="badge bg-danger">Rejected</span>;
       default:
-        return <span className="text-slate-400 font-semibold">Not Uploaded</span>;
-    }
-  };
-
-  // ================== PROFILE PHOTO UPLOAD ==================
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Preview immediately
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setProfilePhoto(reader.result);
-    };
-    reader.readAsDataURL(file);
-
-    // Upload to backend
-    try {
-      const formData = new FormData();
-      formData.append("profilePhoto", file);
-
-      const updatedUser = await uploadProfilePhoto(formData);
-      setUser(updatedUser);
-      console.log("✅ Profile photo updated");
-    } catch (err) {
-      console.error("❌ Failed to upload profile photo:", err);
-      alert("Failed to upload profile photo. Please try again.");
+        return <span className="badge bg-secondary">Not Uploaded</span>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
-      <div className="w-full max-w-xl bg-white p-10 rounded-3xl shadow-xl border">
+    <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center p-4">
+      <div className="card shadow border-0" style={{ maxWidth: "550px", width: "100%" }}>
 
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <div className="bg-emerald-600 p-2 rounded-lg">
-            <ShieldCheck className="text-white" size={24} />
+        {/* Header */}
+        <div className="card-header bg-white border-0 text-center pt-5">
+          <div className="bg-success bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
+            <span className="text-success fw-bold fs-4">SR</span>
           </div>
-          <span className="text-xl font-black uppercase tracking-tight">
-            Safe<span className="text-emerald-600">Return</span>
-          </span>
+          <h2 className="fw-bold">My Profile</h2>
         </div>
 
-        <h2 className="text-2xl font-black text-center text-slate-900 mb-8">
-          My Profile
-        </h2>
+        {/* Body */}
+        <div className="card-body px-5 pb-5">
 
-        {/* Profile Photo */}
-        <div className="flex justify-center mb-6 relative">
-          {profilePhoto ? (
-            <img
-              src={
-                profilePhoto.startsWith("http")
-                  ? profilePhoto
-                  : `http://localhost:5000/${profilePhoto}`
-              }
-              alt="Profile"
-              className="w-28 h-28 rounded-full object-cover border-4 border-emerald-600 cursor-pointer"
-              onClick={() => fileInputRef.current.click()}
+          {/* Profile Photo */}
+          <div className="text-center mb-4">
+            {profilePhoto ? (
+              <img
+                src={
+                  profilePhoto.startsWith("http")
+                    ? profilePhoto
+                    : `http://localhost:5000/${profilePhoto}`
+                }
+                alt="Profile"
+                className="rounded-circle border border-4 border-success"
+                style={{ width: "100px", height: "100px", objectFit: "cover", cursor: "pointer" }}
+                onClick={() => fileInputRef.current.click()}
+              />
+            ) : (
+              <div
+                className="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center mx-auto"
+                style={{ width: "100px", height: "100px", fontSize: "2.5rem", cursor: "pointer" }}
+                onClick={() => fileInputRef.current.click()}
+              >
+                {firstLetter}
+              </div>
+            )}
+
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              className="d-none"
+              onChange={handleFileChange}
             />
-          ) : (
-            <div
-              className="w-28 h-28 rounded-full bg-slate-900 flex items-center justify-center text-white text-4xl font-bold cursor-pointer"
-              onClick={() => fileInputRef.current.click()}
+            
+            <p className="text-secondary small mt-2">Click to change photo</p>
+          </div>
+
+          {/* User Info */}
+          <table className="table table-borderless mb-4">
+            <tbody>
+              <tr>
+                <td className="fw-bold text-secondary">Name</td>
+                <td>{user.name}</td>
+              </tr>
+              <tr>
+                <td className="fw-bold text-secondary">Email</td>
+                <td>{user.email}</td>
+              </tr>
+              <tr>
+                <td className="fw-bold text-secondary">Phone</td>
+                <td>{user.phone || "Not Added"}</td>
+              </tr>
+              <tr>
+                <td className="fw-bold text-secondary">Home Location</td>
+                <td>{user.homeLocation ? "Added ✓" : "Not Added ✗"}</td>
+              </tr>
+              <tr>
+                <td className="fw-bold text-secondary">Aadhaar Status</td>
+                <td>{getAadhaarBadge()}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Progress Bar */}
+          <div className="mb-4">
+            <div className="d-flex justify-content-between mb-1">
+              <span className="fw-bold small">Profile Completion</span>
+              <span className="fw-bold small">{completion}%</span>
+            </div>
+            <div className="progress" style={{ height: "10px" }}>
+              <div
+                className="progress-bar bg-success"
+                style={{ width: `${completion}%` }}
+                role="progressbar"
+              />
+            </div>
+          </div>
+
+          {/* Action Button */}
+          {user.aadhaarStatus === "not_uploaded" && (
+            <button
+              onClick={() => navigate("/verify-aadhaar")}
+              className="btn btn-success w-100 py-3 fw-bold"
             >
-              {firstLetter}
+              Complete Aadhaar Verification
+            </button>
+          )}
+
+          {/* Fully Approved Message */}
+          {completion === 100 && user.aadhaarStatus === "approved" && (
+            <div className="alert alert-success text-center mt-4 mb-0">
+              🎉 Profile Fully Verified & Approved
             </div>
           )}
 
-          {/* Hidden File Input */}
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={handleFileChange}
-          />
         </div>
-
-        {/* Basic Info */}
-        <div className="space-y-3 mb-8 text-sm">
-          <p><strong>Name:</strong> {user.name}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Phone:</strong> {user.phone || "Not Added"}</p>
-          <p>
-            <strong>Home Location:</strong>{" "}
-            {user.homeLocation ? "Added" : "Not Added"}
-          </p>
-          <p>
-            <strong>Aadhaar Status:</strong> {getAadhaarBadge()}
-          </p>
-        </div>
-
-        {/* Progress */}
-        <div className="mb-6">
-          <p className="font-semibold mb-2 text-sm">
-            Profile Completion: {completion}%
-          </p>
-          <div className="w-full bg-slate-200 rounded-full h-3">
-            <div
-              className="bg-emerald-600 h-3 rounded-full transition-all duration-500"
-              style={{ width: `${completion}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Action Button */}
-        {user.aadhaarStatus === "not_uploaded" && (
-          <button
-            onClick={() => navigate("/verify-aadhaar")}
-            className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-emerald-600 transition"
-          >
-            Complete Aadhaar Verification
-          </button>
-        )}
-
-        {/* Fully Approved Message */}
-        {completion === 100 && user.aadhaarStatus === "approved" && (
-          <div className="mt-6 text-center text-emerald-700 font-bold">
-            🎉 Profile Fully Verified & Approved
-          </div>
-        )}
-
       </div>
     </div>
   );
